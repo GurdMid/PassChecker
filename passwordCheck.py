@@ -1,4 +1,5 @@
 import random
+import streamlit as st
 
 SpecialSimbols = '!@#$%^&*_'
 
@@ -7,48 +8,57 @@ def register(password):
     flagupper = any(c.isupper() for c in password)
     flaglower = any(c.islower() for c in password)
     flagdigit = any(c.isdigit() for c in password)
+    messages = []
 
     if not flagdigit:
-        print("Пароль должен содержать цифры")
+        messages.append("Пароль должен содержать цифры")
+    if not flagupper:
+        messages.append("Пароль должен содержать заглавные буквы")
+    if not flaglower:
+        messages.append("Пароль должен содержать строчные буквы")
+    if not (flagupper or flaglower):
+        messages.append("Пароль должен содержать буквы разного регистра")
+    
     if flagupper and flaglower and flagdigit:
-        return 4, improve_register(password, flagupper, flaglower, flagdigit)
+        return 4, improve_register(password, flagupper, flaglower, flagdigit), messages
     elif flagupper and flaglower:
-        return 2, improve_register(password, flagupper, flaglower, flagdigit)
-    elif flaglower:
-        print("Пароль должен содержать заглавные буквы")
-        return 0, improve_register(password, flagupper, flaglower, flagdigit)
-    elif flagupper:
-        print("Пароль должен содержать строчные буквы")
-        return 0, improve_register(password, flagupper, flaglower, flagdigit)
+        return 2, improve_register(password, flagupper, flaglower, flagdigit), messages
     else:
-        print("Пароль должен содержать буквы разного регистра")
-        return 0, addlitters(password)
+        if not flagupper and not flaglower:
+            return 2, addlitters(password), messages
+        return 0, improve_register(password, flagupper, flaglower, flagdigit), messages
      
 def repiat(password, newpass):
     flagrepiat = True
+    messages = []
     for i in range(len(password)-1):
         if password[i] == password[i+1]:
             flagrepiat = False
+            messages.append("Пароль не должен содержать повторяющиеся подряд символы")
+            break
     if flagrepiat:
-        return 2, newpass
+        return 2, newpass, messages
     else: 
-        print('Пароль не должен содержать повторяющиеся подряд символы')
-        return 0, repairrepiat(newpass)   
+        return 0, repairrepiat(newpass), messages   
 
 def Check(password):
     password = "".join(password.split())
     newpass = password
     grade = 0
+    all_messages = []
 
-    ball, newpass = repiat(password, newpass)
+    ball, newpass, messages = repiat(password, newpass)
     grade += ball
-    ball, newpass = register(newpass)
+    all_messages.extend(messages)
+    
+    ball, newpass, messages = register(newpass)
     grade += ball
+    all_messages.extend(messages)
 
     flagSimbols = any(i in SpecialSimbols for i in newpass)
     
     if not flagSimbols:
-        print(f'Добавьте специальные символы (Например: {SpecialSimbols})')
+        all_messages.append(f"Добавьте специальные символы (Например: {SpecialSimbols})")
         newpass = addsimbol(newpass)
         flagSimbols = True
     else:
@@ -57,15 +67,15 @@ def Check(password):
     if len(newpass) >= 8:
         grade += 2
     else:
-        print("Пароль должен состоять минимум из 8 символов")
+        all_messages.append("Пароль должен состоять минимум из 8 символов")
         newpass = repairlen(newpass)
 
     if str(newpass) != str(newpass[::-1]):
         grade += 2
     else:
-        print("Пароль не должен быть палиндромом")
+        all_messages.append("Пароль не должен быть палиндромом")
     
-    return grade, newpass
+    return grade, newpass, all_messages
 
 # Новые пароли
 def improve_register(newpass, flagupper, flaglower, flagdigit):
@@ -84,6 +94,7 @@ def up(newpass):
         chars[i] = chars[i].upper()
     newpass = ''.join(chars)
     return newpass
+
 def low(newpass):
     chars = list(newpass)
     for j in range(2):
@@ -91,6 +102,7 @@ def low(newpass):
         chars[i] = chars[i].lower()
     newpass = ''.join(chars)
     return newpass
+
 def digit(newpass):
     chars = list(newpass)
     i = random.randint(0, len(chars) - 1)
@@ -114,6 +126,7 @@ def addlitters(password):
         chars[i] += l
     newpass = ''.join(chars)
     return newpass
+
 def addsimbol(newpass):
     chars = list(newpass)
     i = random.randint(0, len(chars) - 1)
@@ -139,30 +152,51 @@ def repairrepiat(newpass):
                         break            
             elif num == 2:
                 while 1:
-                    chars[i+1] = str(random.randint(10, 1000))
+                    chars[i+1] = str(random.randint(10, 100))
                     n = chars[i+1]
                     if n != n[::-1] and chars[i+1] != chars[-len(chars)+i] and chars[i+1] != chars[i]:
                         break
     newpass = ''.join(chars)
     return newpass
+
 def repairlen(newpass):
     chars = list(newpass)
     while len(chars) < 8:
         i = random.randint(0, len(chars))
         num = random.randint(0, 2)
         if num == 0:
-            chars.insert(i, chr(random.randint(65, 90)))  
+            chars.insert(i, chr(random.randint(65, 90))) 
         elif num == 1:
-            chars.insert(i, chr(random.randint(97, 122)))
+            chars.insert(i, chr(random.randint(97, 122))) 
         else:
             chars.insert(i, str(random.randint(0, 9)))
     newpass = ''.join(chars)
     return newpass
 
-print('Введите ваш пароль')
-password = input().strip()
-grade, newpass = Check(password)
-print(f'Пароль набрал: {grade}/12 баллов')
-print(f'Пример надежного пароля - {newpass}')
-grade, newpass = Check(newpass)
-print(f'Он защищен на {grade}/12 баллов')
+# Интерфейс Streamlit
+st.title("Проверка пароля")
+
+password = st.text_input("Введите ваш пароль")
+
+if st.button("Проверить"):
+    if password:
+        grade, newpass, messages = Check(password)
+
+        if messages:
+            st.subheader("Найденные проблемы:")
+            for msg in messages:
+                st.warning(msg)
+        else:
+            st.success("Пароль не содержит критических проблем!")
+        
+        st.write(f"Пароль набрал: **{grade}/12** баллов")
+        st.write(f"Пример надежного пароля: **{newpass}**")
+        
+        grade2, newpass2, messages2 = Check(newpass)
+        st.write(f"Новый пароль защищен на: **{grade2}/12** баллов")
+        
+        if messages2:
+            for msg in messages2:
+                st.warning(msg)
+    else:
+        st.warning("Введите пароль")
