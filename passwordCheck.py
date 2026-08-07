@@ -1,7 +1,8 @@
 import random
 
 SpecialSimbols = '!@#$%^&*_'
-#Проверки
+
+# Проверки
 def register(password):
     flagupper = any(c.isupper() for c in password)
     flaglower = any(c.islower() for c in password)
@@ -14,7 +15,7 @@ def register(password):
     elif flagupper and flaglower:
         return 2, improve_register(password, flagupper, flaglower, flagdigit)
     elif flaglower:
-        print("Пароль должен содержать  заглавные буквы")
+        print("Пароль должен содержать заглавные буквы")
         return 0, improve_register(password, flagupper, flaglower, flagdigit)
     elif flagupper:
         print("Пароль должен содержать строчные буквы")
@@ -22,10 +23,9 @@ def register(password):
     else:
         print("Пароль должен содержать буквы разного регистра")
         return 0, addlitters(password)
-    
+     
 def repiat(password, newpass):
     flagrepiat = True
-
     for i in range(len(password)-1):
         if password[i] == password[i+1]:
             flagrepiat = False
@@ -38,39 +38,36 @@ def repiat(password, newpass):
 def Check(password):
     password = "".join(password.split())
     newpass = password
-    grade =  0
-    flagSimbols = False
+    grade = 0
 
     ball, newpass = repiat(password, newpass)
     grade += ball
     ball, newpass = register(newpass)
-    grade +=  ball
+    grade += ball
 
-    for i in password:
-        if i in SpecialSimbols:
-            flagSimbols = True
-            break
+    flagSimbols = any(i in SpecialSimbols for i in newpass)
+    
     if not flagSimbols:
         print(f'Добавьте специальные символы (Например: {SpecialSimbols})')
         newpass = addsimbol(newpass)
+        flagSimbols = True
+    else:
+        grade += 2
 
-    if len(password) >= 8:
+    if len(newpass) >= 8:
         grade += 2
     else:
         print("Пароль должен состоять минимум из 8 символов")
         newpass = repairlen(newpass)
 
-    if str(password) != str(password[::-1]):
+    if str(newpass) != str(newpass[::-1]):
         grade += 2
     else:
         print("Пароль не должен быть палиндромом")
     
-    if flagSimbols:
-        grade += 2
-
     return grade, newpass
 
-#Новые пароли
+# Новые пароли
 def improve_register(newpass, flagupper, flaglower, flagdigit):
     if not flagupper:
         newpass = up(newpass)
@@ -150,32 +147,22 @@ def repairrepiat(newpass):
     return newpass
 def repairlen(newpass):
     chars = list(newpass)
-    for i in range(len(newpass)-1):
+    while len(chars) < 8:
+        i = random.randint(0, len(chars))
         num = random.randint(0, 2)
-        if len(newpass) < 8:
-            if num == 0:
-                while 1:
-                    chars[i+1] = chr(random.randint(65, 90))
-                    if chars[i+1] != chars[-len(chars)+i] and chars[i+1] != chars[i]:
-                        break
-            elif num == 1:
-                while 1:
-                    chars[i+1] = chr(random.randint(97, 122))
-                    if chars[i+1] != chars[-len(chars)+i] and chars[i+1] != chars[i]:
-                        break            
-            elif num == 2:
-                while 1:
-                    chars[i+1] = str(random.randint(10, 1000))
-                    n = chars[i+1]
-                    if n != n[::-1] and chars[i+1] != chars[-len(chars)+i] and chars[i+1] != chars[i]:
-                        break
+        if num == 0:
+            chars.insert(i, chr(random.randint(65, 90)))  # Заглавная буква
+        elif num == 1:
+            chars.insert(i, chr(random.randint(97, 122)))  # Строчная буква
+        else:
+            chars.insert(i, str(random.randint(0, 9)))  # Цифра
     newpass = ''.join(chars)
-    return newpass    
+    return newpass
 
-print("Введите ваш пароль")
-password = input().rstrip().lstrip()
+print('Введите ваш пароль')
+password = input().strip()
 grade, newpass = Check(password)
-print(f'Пароль набрал: {grade}/12 баллов)')
+print(f'Пароль набрал: {grade}/12 баллов')
+print(f'Пример надежного пароля - {newpass}')
 grade, newpass = Check(newpass)
-print(f'''Пример надежного пароля - {newpass} 
-Он защищен на {grade}/12 баллов''')
+print(f'Он защищен на {grade}/12 баллов')
