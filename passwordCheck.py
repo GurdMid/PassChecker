@@ -151,11 +151,11 @@ def repairlen(newpass):
         i = random.randint(0, len(chars))
         num = random.randint(0, 2)
         if num == 0:
-            chars.insert(i, chr(random.randint(65, 90)))  # Заглавная буква
+            chars.insert(i, chr(random.randint(65, 90)))  
         elif num == 1:
-            chars.insert(i, chr(random.randint(97, 122)))  # Строчная буква
+            chars.insert(i, chr(random.randint(97, 122)))
         else:
-            chars.insert(i, str(random.randint(0, 9)))  # Цифра
+            chars.insert(i, str(random.randint(0, 9)))
     newpass = ''.join(chars)
     return newpass
 
